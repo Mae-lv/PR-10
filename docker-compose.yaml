@@ -1,0 +1,64 @@
+version: '3.9'
+
+services:
+  documents:
+    build: ./documents_service
+    ports:
+      - 8000:80
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/__health"]
+      interval: 10s
+      timeout: 30s
+      retries: 5
+      start_period: 5s
+
+  templates:
+    build: ./templates_service
+    ports:
+      - 8001:80
+
+  db:
+    build: ./DB
+    ports:
+      - 8002:80
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/__health"]
+      interval: 10s
+      timeout: 30s
+      retries: 5
+      start_period: 5s
+
+  krakend_ce:
+    image: devopsfaith/krakend:watch
+    volumes:
+      - ./config/krakend:/etc/krakend
+    ports:
+      - "8080:8080"
+    command: ["run", "-d", "-c", "/etc/krakend/krakend.json"]
+    depends_on:
+      - documents
+      - templates
+      - db
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "6831:6831/udp"
+      - "16686:16686"
+#    networks:
+#      - jaeger-example
+
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - 9090:9090
+
+  grafana:
+    image: grafana/grafana-oss
+    ports:
+      - 3000:3000
+    restart: unless-stopped
+    volumes:
+      - ./config/grafana/datasources:/etc/grafana/provisioning/datasources

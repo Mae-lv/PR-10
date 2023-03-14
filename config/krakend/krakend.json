@@ -1,0 +1,90 @@
+{
+    "$schema": "https://www.krakend.io/schema/v3.json",
+    "version": 3,
+    "endpoints": [
+        {
+            "endpoint": "/v1/documents",
+            "method":"GET",
+            "backend": [{
+                    "url_pattern": "/v1/docs",
+                    "method": "GET",
+                    "host": ["http://documents"],
+                    "is_collection": true,
+                    "mapping": {
+                        "collection": "documents"
+                    }
+                }]
+        },
+        {
+            "endpoint": "/v1/documents/{id}",
+            "method":"GET",
+            "output_encoding": "no-op",
+            "backend": [{
+                    "encoding": "no-op",
+                    "url_pattern": "/v1/docs/{id}",
+                    "method": "GET",
+                    "host": ["http://documents"]
+            }]
+        },
+        {
+            "endpoint": "/v1/documents",
+            "method":"POST",
+            "backend": [
+                {
+                    "url_pattern": "/v1/docs",
+                    "method":"POST",
+                    "host":["http://documents"]
+                }
+            ]
+        },
+        {
+            "endpoint": "/v1/data",
+            "method": "GET",
+            "backend": [
+                {
+                    "url_pattern": "/v1/docs",
+                    "method": "GET",
+                    "host": ["http://documents"],
+                    "is_collection": true,
+                    "mapping": {
+                        "collection": "documents"
+                    }
+            }]
+        },
+        {
+            "endpoint": "/v1/books",
+            "method": "GET",
+            "backend": [{
+                "url_pattern": "/",
+                "method":"GET",
+                "host": ["http://db"],
+                "is_collection": true,
+                "mapping": {
+                    "collection": "books"
+                }
+            }]
+        }
+
+    ],    
+    "extra_config": {
+        "telemetry/opencensus": {
+            "sample_rate": 100,
+            "reporting_period": 0,
+            "exporters": {
+                "jaeger":{
+                    "endpoint": "http://jaeger:14268/api/traces",
+                    "service_name": "krakend",
+                    "buffer_max_count": 1000
+                },
+                "prometheus": {
+                    "port": 9091,
+                    "namespace": "krakend",
+                    "tag_host": false,
+                    "tag_path": true,
+                    "tag_method": true,
+                    "tag_statuscode": false
+                }
+            }
+        }
+    }
+}
